@@ -33,7 +33,7 @@
 #define  SWITCH1_PIN 11
 #define  SWITCH2_PIN 12
 #define  THERMO_PIN A0                                                               
-#define  NUMPIXELS 52
+#define  NUMPIXELS 40
                   
 /// / / / / / / / / / / / / / / / / / / / / / // I N S T A N T I A T I O N  O F  C O M P O N E N T S              
 DS3231              Clock;                    // 
@@ -55,18 +55,27 @@ int switch2Prev  ;                     // to work
 boolean autoLightCycle = true;         //  L I G H T   C Y C L E   P R O G R A M 
 int prevCommand;
                                                                                        
-int wait        =   500;               // R G B   R I N G   V A L U E S 
+int wait        =   250;               // R G B   R I N G   V A L U E S 
                 
-int black[3]    = {   0,   0,   0 };   // Color arrays
-int white[3]    = { 245, 245, 255 };
-int red[3]      = { 255,   0,   0 };
-int green[3]    = {   0, 255,   0 };
-int blue[3]     = {   0,   0, 255 };
-int purple[3]   = { 200,   0, 255 };
-int dimPurp[3]  = {  15,   0,  15 };
-int dimBlue[3]  = {   0,   0,  25 };
-int dimWhite[3] = {  25,  25,  25 };                                          
-                                              
+//int black[3]    = {   0,   0,   0 };   // Color arrays
+//int white[3]    = { 255, 255, 255 };
+//int red[3]      = { 222,   0,   0 };
+//int green[3]    = {   0, 255,   0 };
+//int blue[3]     = {   0,   0, 255 };
+//int purple[3]   = { 200,   100, 255 };
+//int dimPurp[3]  = {  15,   5,  15 };
+//int dimBlue[3]  = {   0,   0,  25 };
+//int dimWhite[3] = {  25,  25,  25 };
+uint32_t black = ring.Color(0, 0, 0);                                          
+uint32_t white = ring.Color(255, 255, 255);
+uint32_t red = ring.Color(255, 0, 0);
+uint32_t green = ring.Color(0, 255, 0);
+uint32_t blue = ring.Color(0, 0, 255);
+uint32_t dimPurp = ring.Color(15, 5, 15);
+uint32_t dimBlue = ring.Color(0, 0, 25);
+uint32_t dimWhite = ring.Color(25, 25, 25);
+
+
 bool Century=false;                        //  C L O C K
 bool h12;
 bool PM;
@@ -94,7 +103,7 @@ void setup() {                                //
 
   // feedCount   = 0;                         // Reset Feed Count After Refilling Feed Tank
                                               // The following lines can be uncommented to set the date and time
-  //setDS3231time(0,47,23,2,13,3,18);           // DS3231 seconds, minutes, hours, day, date, month, year
+  //setDS3231time(0,47,23,2,13,3,18);         // DS3231 seconds, minutes, hours, day, date, month, year
 }                                             // E N D   S E T U P
 
 
@@ -102,17 +111,13 @@ void setup() {                                //
 void loop() {                                 
   switchState();                              // C H E C K   S W I T C H   S T A T E
   updateDisplay();                            // U P D A T E   L C D   D I S P L A Y
-  //isItTimeToFeed();                           // Is It Time To Feed? Check.
+  //isItTimeToFeed();                         // Is It Time To Feed? Check.
   //Serial.print(cHour);Serial.print(":");Serial.print(cMinute);// Print Debug
   Serial.print(cHour);Serial.print(":");Serial.print(cMinute);Serial.println();
 }                                             // E N D   L O O P
 
 // / / / / / / / / / / / / / / / / / / / / / / / 
-void updateDisplay() {                        //  U P D A T E   D I S P L A Y
-                                              //  lcd.print("Hood Temp: ");
-                                              //  hoodTemp = analogRead(THERMO_PIN);
-                                              //  hoodTemp =(hoodTemp/1024)*1.8+32;
-                                              //  lcd.print(hoodTemp);  
+void updateDisplay() {                        //  U P D A T E   D I S P L A Y 
   updateTime();      
   lcd.clear();
   lcd.setCursor(0, 1);
@@ -143,6 +148,11 @@ void updateDisplay() {                        //  U P D A T E   D I S P L A Y
   delay(2000);
   lcd.clear();
   lcd.backlight();
+
+  //  lcd.print("Hood Temp: ");
+  //  hoodTemp = analogRead(THERMO_PIN);
+  //  hoodTemp =(hoodTemp/1024)*1.8+32;
+  //  lcd.print(hoodTemp); 
 }
 /// / / / / / / / / / / / / / / / / / / / / / // L E D  S W I T C H   T O G G L E   < < < < < < < < < < < BUG
 void switchState(){
@@ -153,26 +163,26 @@ void switchState(){
     if (switch2State == HIGH) {               // 1 1 - AUTO LIGHT CYCLE 
       Serial.println("SWITCH2 ON HIGH");      // Print Debug
       autoLightCycle = true;
-      switchesToggle(6);                      
+      lightMode(6);                      
     } else {                                  // 1 0 - PARTY MODE
-      Serial.println("SWITCH1 ON LOW");
+      Serial.println("SWITCH2 ON LOW");
       autoLightCycle = false;
-      switchesToggle(3);                      
+      lightMode(3);                      
     }
   } else{
-    autoLightCycle = false;                      
+    autoLightCycle = false; 
     if (switch2State == HIGH) {               // 0 1 - BRIGHT MODE
       Serial.println("SWITCH2 ON HIGH");      // Print Debug
-      switchesToggle(4);                      
-    } else {                                  // 0 0 - DIM MODE
-      Serial.println("SWITCH1 ON LOW");
+      lightMode(4);                      
+    } else { 
+      Serial.println("SWITCH1 ON LOW");   // 0 0 - DIM MODE                   
       Serial.println("SWITCH2 ON LOW");
-      switchesToggle(2);                       
+      lightMode(2);                       
     }
   }
 }
                                               // L I G H T  S W I T C H  T O G G L E R 
-void switchesToggle(int switchCommand) {      
+void lightMode(int switchCommand) {      
   if (prevCommand != switchCommand || switchCommand == 6 ||  switchCommand == 3) {
     lcd.clear();
     switch (switchCommand) {
@@ -205,38 +215,35 @@ void switchesToggle(int switchCommand) {
   lcd.clear();
   prevCommand = switchCommand;
 }                                             
-void autoLightCycler(){                       // A U T O - L I G H T I N G   F U N C T I O N 
+void autoLightCycler(){                                                                           // A U T O - L I G H T I N G   F U N C T I O N 
   updateTime();
-  if(cHour >= 0  && cHour < 5){               // Turn off Lights   |  12a - 5a  |  5 hrs of off
-    switchesToggle(1);  
-  }else if(cHour >=   5 && cHour < 8){        // Turn on Dim |  5a - 8a   |  3 hrs of dim
-    switchesToggle(5); 
-  }else if(cHour >=   8 && cHour < 22){       // Turn on Bright    |  8a - 10p  | 14 hrs of bright
-    switchesToggle(4); 
-  }else if(cHour >=  22 && cHour < 24){       // Turn on Dim | 10p - 12a  |  2 hrs of dim
-    switchesToggle(5);  
-  }                                           // 5 hrs off  | 5 hrs dim  | 14 hrs on
+  if(cHour >= 0  && cHour < 7){                                                                   // Turn off Lights  7 hrs OFF
+    lightMode(1);
+  }else if((cHour>=7 && cHour<8)  || (cHour>=12 && cHour<14) || (cHour>=20 && cHour<24)  ){        // Turn on Dim      7 hrs DIM
+    lightMode(5);                                                               
+  }else if((cHour>=8 && cHour<12) || (cHour>=14 && cHour<20)){                                    // Turn on Bright   10 hrs BRIGHT
+    lightMode(4); 
+  }                                       
 }
 
 
-/// / / / / / / / / / / / / / / / / / / / / / // S E R V O   A C T I V A T I O N                                               
-void servoFeed(){                             // F E E D   F U N C T I O N 
-  servo.attach(SERVO_PIN);                              
-  delay(15);                                  
-  for(int i = 0; i<=numFeed;i++){
-    for (pos = 0; pos <= 180; pos += 1) {       // goes from 0 degrees to 180 degrees in steps of 1 degree
-      servo.write(pos);                         // tell servo to go to position in variable 'pos'
-      delay(15);                                // waits 15ms for the servo to reach the position
-    }
-    for (pos = 180; pos >= 0; pos -= 1) {       // goes from 180 degrees to 0 degrees
-      servo.write(pos);                         // tell servo to go to position in variable 'pos'
-      delay(15);                                // waits 15ms for the servo to reach the position
-    }
-  } 
-  servo.detach();
-  void theaterChaseRainbow();
-}                                             
-
+///// / / / / / / / / / / / / / / / / / / / / / // S E R V O   A C T I V A T I O N                                               
+//void servoFeed(){                             // F E E D   F U N C T I O N 
+//  servo.attach(SERVO_PIN);                              
+//  delay(15);                                  
+//  for(int i = 0; i<=numFeed;i++){
+//    for (pos = 0; pos <= 180; pos += 1) {       // goes from 0 degrees to 180 degrees in steps of 1 degree
+//      servo.write(pos);                         // tell servo to go to position in variable 'pos'
+//      delay(15);                                // waits 15ms for the servo to reach the position
+//    }
+//    for (pos = 180; pos >= 0; pos -= 1) {       // goes from 180 degrees to 0 degrees
+//      servo.write(pos);                         // tell servo to go to position in variable 'pos'
+//      delay(15);                                // waits 15ms for the servo to reach the position
+//    }
+//  } 
+//  servo.detach();
+//  void theaterChaseRainbow();
+//}                                             
 
 /// / / / / / / / / / / / / / / / / / / / / / // D S 3 2 3 1    C L O C K
 void updateTime(){                            // G E T   T I M E 
@@ -287,28 +294,28 @@ void readDS3231time(byte *second,byte *minute, byte *hour, byte *dayOfWeek, byte
 // / / / / / / / / / / / / / / / / / / / / / / 
 
 
-void twoColorDim(int color[3], int color2[3]) {
+void twoColorDim(uint32_t colorA, int colorB) {
   // 1ST, 2ND, 3RD LEDS ARE WHITE
   // 4TH, 5TH      LEDS ARE COLOR 
   ring.begin();
   ring.show(); 
   for(int i=0;i<NUMPIXELS;i+=5){                          
-    ring.setPixelColor(i, ring.Color(15,15,15));          // DIM WHITE
+    ring.setPixelColor(i, dimWhite);          // DIM WHITE
     delay(wait);
     ring.show();
-    ring.setPixelColor(i+1, ring.Color(15,15,15));        // DIM WHITE
+    ring.setPixelColor(i+1, dimWhite);        // DIM WHITE
     delay(wait);
     ring.show();
-    ring.setPixelColor(i+2, ring.Color(15,15,15));        // DIM WHITE
+    ring.setPixelColor(i+2, dimWhite);        // DIM WHITE
     delay(wait);
     ring.show();
-    ring.setPixelColor(i+3, ring.Color(15,15,15));        // DIM WHITE
+    ring.setPixelColor(i+3, dimWhite);        // DIM WHITE
     delay(wait);
     ring.show();
-    ring.setPixelColor(i+4, ring.Color(color[0],color[1], color[2]));   // COLOR 1
+    ring.setPixelColor(i+4, colorA);   // COLOR 1
     delay(wait);
     ring.show();
-    ring.setPixelColor(i+5, ring.Color(color2[0], color2[1], color2[2] ) );   // COLOR 2
+    ring.setPixelColor(i+5, colorB );   // COLOR 2
     delay(wait);
     ring.show();
   }
@@ -320,13 +327,13 @@ void nightLighting() {
   ring.begin();
   ring.show(); 
   for(int i=0;i<NUMPIXELS;i++){
-      ring.setPixelColor(i, ring.Color(0,0,0));   // TURN ALL PIXELS OFF ONE BY ONE W/ DELAY
+      ring.setPixelColor(i, black);   // TURN ALL PIXELS OFF ONE BY ONE W/ DELAY
       delay(wait);
       ring.show();
   }
-  ring.setPixelColor(10, ring.Color(15,15,15));
+  ring.setPixelColor(10, dimWhite);
   delay(wait);
-  ring.setPixelColor(50, ring.Color(15,15,15));        
+  ring.setPixelColor(50, dimWhite);        
   ring.show();                                  // This sends the updated pixel color to the hardware.
 }
 
@@ -335,19 +342,19 @@ void changeBrightColor() {
   ring.begin();
   ring.show(); 
   for(int i=0;i<NUMPIXELS;i+=5){               // pixels.Color takes RGB values, from 0,0,0 up to 255,255,255
-    ring.setPixelColor(i, ring.Color(175,222,175));     // red & blue
+    ring.setPixelColor(i, red);     // red & blue
     delay(wait);
     ring.show();
-    ring.setPixelColor(i+1, ring.Color(175,255,175));     // red & blue
+    ring.setPixelColor(i+1, green);     // red & blue
     delay(wait);
     ring.show();
-    ring.setPixelColor(i+2, ring.Color(75,0,255));      // blue
+    ring.setPixelColor(i+2, blue);      // blue
     delay(wait);
     ring.show();
-    ring.setPixelColor(i+3, ring.Color(225,175,225));   // white
+    ring.setPixelColor(i+3, white);   // white
     delay(wait);
     ring.show();
-    ring.setPixelColor(i+4, ring.Color(225,175,225));   // white
+    ring.setPixelColor(i+4, white);   // white
     delay(wait);
     ring.show();
   }
@@ -361,11 +368,9 @@ void theaterChaseRainbow(uint8_t wait) {      // Theatre-style crawling lights w
         ring.setPixelColor(i + q, Wheel( (i + j) % 255)); //turn every third pixel on
       }
       ring.show();
-//      for (uint16_t i = 0; i < ring.numPixels(); i = i + 2) {
-//        ring.setPixelColor(i + q, 0);         // turn every third pixel off
-//      }
-      
-      delay(wait);
+      delay(wait/2);
+      if((switch1State != HIGH ) && (switch2State !=LOW))
+        break;
     }
   }
 }  
